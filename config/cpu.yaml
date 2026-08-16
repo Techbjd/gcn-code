@@ -1,0 +1,32 @@
+# CPU-friendly configuration.
+# Small model, small batch: GCN training on a laptop is fast but memory-bound,
+# so keep hidden_dim and batch_size modest. ~30 s/epoch on a typical 4-core CPU.
+
+data:
+  # Path to the raw ChEMBL CSV (downloaded automatically if missing).
+  raw_csv: data/raw/chembl_mdm2.csv
+  # A molecule is an MDM2 inhibitor (label 1) iff pChEMBL >= threshold.
+  # pChEMBL = -log10(IC50/Ki/Kd/EC50 in M); 6.0 == 1 uM potency cutoff.
+  threshold_pchembl: 6.0
+
+model:
+  model_type: gcn            # "gcn" (GCNConv) or "gin" (GINConv)
+  hidden_dim: 128            # hidden feature width per GCN layer
+  num_layers: 3              # depth of the message-passing stack
+  dropout: 0.2               # dropout after each conv block (regularization)
+  pooling: sum               # global pooling: sum | mean | max
+
+train:
+  device: cpu                # CPU-only. If you have a GPU use config/gpu.yaml.
+  batch_size: 32             # keep small on CPU to limit memory
+  epochs: 60                 # plenty for a small dataset on CPU
+  lr: 0.001                  # Adam learning rate
+  weight_decay: 0.0001       # L2 regularization
+  early_stopping: 10         # stop if val loss does not improve for N epochs
+  seed: 42                   # reproducibility (torch/numpy/random)
+  test_ratio: 0.2            # fraction of data held out as the test set
+  val_ratio: 0.15            # fraction of data held out as the val set
+  checkpoint: checkpoints/best_model.pt   # best model saved here (best val loss)
+
+predict:
+  threshold: 0.5             # class = 1 if probability_active >= threshold

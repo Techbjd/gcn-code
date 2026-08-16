@@ -1,0 +1,14 @@
+# Core machine-learning stack
+torch>=2.0
+torch-geometric>=2.4
+rdkit
+pandas
+numpy
+scikit-learn
+
+# Plotting & I/O
+matplotlib
+seaborn
+requests
+tqdm
+pyyaml

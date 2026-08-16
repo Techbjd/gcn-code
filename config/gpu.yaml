@@ -1,0 +1,35 @@
+# GPU configuration.
+# device: cuda falls back to cpu automatically if CUDA is not available
+# (handled by src/utils.get_device). A GPU allows a much larger model and
+# bigger batches because matrix ops run on dedicated tensor cores and the
+# mini-batch is computed in parallel, so gradient updates are far cheaper.
+
+data:
+  # Path to the raw ChEMBL CSV (downloaded automatically if missing).
+  raw_csv: data/raw/chembl_mdm2.csv
+  # A molecule is an MDM2 inhibitor (label 1) iff pChEMBL >= threshold.
+  threshold_pchembl: 6.0
+
+model:
+  model_type: gcn            # "gcn" (GCNConv) or "gin" (GINConv)
+  hidden_dim: 256            # larger width = more expressive; GPU memory allows it
+  num_layers: 4              # deeper stack benefits from more data + dropout
+  dropout: 0.3               # higher dropout tames the larger model (regularization)
+  pooling: sum               # global pooling: sum | mean | max
+
+train:
+  device: cuda               # cuda if available, cpu otherwise (code handles fallback)
+  batch_size: 256            # large batches use GPU parallelism efficiently
+  epochs: 150                # GPUs are fast; train longer for better convergence
+  lr: 0.001                  # Adam learning rate
+  weight_decay: 0.0001       # L2 regularization
+  early_stopping: 20         # longer patience to ride out slow val-loss plateaus
+  seed: 42                   # reproducibility (torch/numpy/random)
+  test_ratio: 0.2            # fraction of data held out as the test set
+  val_ratio: 0.15            # fraction of data held out as the val set
+  checkpoint: checkpoints/best_model.pt   # best model saved here (best val loss)
+  # num_workers: 4           # DataLoader worker processes; raise to 4-8 on GPU machines
+  #                          # to keep the GPU fed with preprocessed graphs.
+
+predict:
+  threshold: 0.5             # class = 1 if probability_active >= threshold

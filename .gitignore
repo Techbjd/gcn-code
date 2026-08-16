@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.zip
+checkpoints/
+outputs/
+data/processed/
+data/raw/chembl_mdm2.csv
+.DS_Store
+.venv/
