@@ -91,6 +91,10 @@ def main() -> None:
     parser.add_argument("--id_col", default="id", help="Column holding the molecule id.")
     parser.add_argument("--output", default="outputs/screen_predictions.csv", help="Combined output CSV.")
     parser.add_argument("--chunk_size", type=int, default=50000, help="Molecules per chunk.")
+    parser.add_argument("--max_rows", type=int, default=0,
+                        help="Only screen the first N input rows (0 = all). "
+                             "Useful to smoke-test the whole screen -> analyze "
+                             "chain on Colab before a full-library run.")
     parser.add_argument("--workers", type=int, default=0, help="Featurizer processes (0 = auto).")
     parser.add_argument("--inproc", action="store_true",
                         help="Featurize in the main process instead of worker "
@@ -127,6 +131,10 @@ def main() -> None:
     reader = pd.read_csv(args.input, chunksize=args.chunk_size, usecols=usecols)
     chunk_idx, total = 0, 0
     for chunk in reader:
+        if args.max_rows > 0 and total >= args.max_rows:
+            break
+        if args.max_rows > 0:
+            chunk = chunk.iloc[: args.max_rows - total]
         smis = chunk[args.smiles_col].tolist()
         ids = chunk[args.id_col].tolist() if has_id else list(range(total, total + len(smis)))
         id_name = args.id_col if has_id else "id"

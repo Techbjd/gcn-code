@@ -12,6 +12,17 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
+_MISSING_PREDICTIONS_HINT = (
+    "predictions file not found: {path}\n"
+    "Run the COCONUT screening step FIRST - it writes this file only after all "
+    "chunks are scored. If it was interrupted, re-run the screen cell, or "
+    "smoke-test on a small sample first:\n"
+    "  python -m src.screen --config config/colab.yaml "
+    "--input coconut_csv_lite.csv --smiles_col canonical_smiles --id_col id "
+    "--output outputs/coconut_predictions.csv --chunk_size 50000 --max_rows 2000 --inproc\n"
+    "then re-run this hit-curation cell."
+)
+
 
 def _scaffold(smiles: str) -> str:
     mol = Chem.MolFromSmiles(smiles)
@@ -31,6 +42,8 @@ def main() -> None:
     parser.add_argument("--outdir", default="outputs", help="Directory for output files.")
     args = parser.parse_args()
 
+    if not os.path.exists(args.predictions):
+        raise FileNotFoundError(_MISSING_PREDICTIONS_HINT.format(path=args.predictions))
     pred = pd.read_csv(args.predictions)
     if args.library:
         lib = pd.read_csv(args.library, usecols=[args.smiles_col])
